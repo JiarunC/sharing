@@ -1,26 +1,26 @@
-import { useState } from 'react';
-import { useRef } from 'react';
+import {useRef, useState} from 'react';
 import "./tiles.css"
 
 type coordinate = [number, number];
-function Square({ value, offsets, onSquareClick }) {
+function Square({ value, offsets, onSquareClick } : {value: number, offsets: coordinate, onSquareClick : any}) {
     return (
         <>
             <button
                 className={"square"}
                 onClick={onSquareClick}
                 style={{
-                    transform: `translate(${offsets[offsets[0]]}px, ${offsets[1]}px)`,
+                    transform: `translate(${offsets[0]}px, ${offsets[1]}px)`,
                 }}
             >
-                {value}
+                {value}-{offsets}
             </button>
         </>
     )
 }
 function Board() {
-    let board = useRef(Array(8).fill(0));
-    let offsetArray = useRef(Array(8).fill([0,0]));
+    const [board, setBoard] = useState(Array(8).fill(0));
+    const [offsetArray, setOffsetArray] = useState(Array(8).fill([0,0]))
+    const emptySlot = useRef(8);
 
     function populateBoard() {
 
@@ -30,26 +30,29 @@ function Board() {
 
     }
 
-    function handleClick(i) {
-        const newBoard = board.current.slice();
+    function handleClick(i: number) {
+        const newBoard = board.slice();
         newBoard[i] += 1;
-        board.current = newBoard;
-        const newOffsetArray = offsetArray.current.slice();
-        newOffsetArray[i] = [100,100];
-        offsetArray.current = newOffsetArray;
+        setBoard(newBoard);
+        const newOffsetArray = offsetArray.slice();
+        newOffsetArray[i] = [newOffsetArray[i][0]+100, newOffsetArray[i][1]+100];
+        setOffsetArray(newOffsetArray);
     }
-
     return (
         <>
             <div className="board">
                 <button onClick={populateBoard}>Populate</button>
                 <button onClick={clearBoard}>Clear</button>
                 <div>
-                    <Square
-                        value={board.current[0]}
-                        offsets={offsetArray.current[0]}
-                        onSquareClick={() => handleClick(0)}
-                    />
+                    {Array(8).fill(0).map((_,index) =>
+                        <Square
+                            value={board[index]}
+                            offsets={offsetArray[index]}
+                            onSquareClick={() => handleClick(index)}
+                        />
+                    )}
+
+
                 </div>
             </div>
         </>
