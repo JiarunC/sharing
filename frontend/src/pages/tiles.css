@@ -1,0 +1,14 @@
+.board {
+    width: 600px;
+    height: 600px;
+    margin: auto;
+    border-radius: 1.5rem;
+    border: medium double orange;
+    background-color: cornflowerblue;
+}
+
+
+.square {
+    width: 100px;
+    height: 100px;
+}
