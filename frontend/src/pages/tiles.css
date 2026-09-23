@@ -5,10 +5,17 @@
     border-radius: 1.5rem;
     border: medium double orange;
     background-color: cornflowerblue;
+    display: flex;
 }
 
 
 .square {
+    position: absolute;
     width: 100px;
     height: 100px;
+}
+
+.board .controls {
+    width: 20px;
+    height: 20px;
 }
