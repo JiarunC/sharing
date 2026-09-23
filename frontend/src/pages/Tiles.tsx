@@ -2,7 +2,7 @@ import {useRef, useState} from 'react';
 import "./tiles.css"
 
 type coordinate = [number, number];
-function Square({ value, position, offsets, onSquareClick } : {value : number, position : number, offsets: coordinate, onSquareClick : any}) {
+function Square({ value, offsets, onSquareClick } : {value : number, offsets: coordinate, onSquareClick : any}) {
     return (
         <>
             <button
@@ -141,7 +141,6 @@ function Board() {
                     {Array(numberOfTiles).fill(0).map((_,index) =>
                         <Square
                             value={board[index]}
-                            position={positions.current[index]}
                             offsets={offsetArray[index]}
                             onSquareClick={() => handleClick(index)}
                         />
