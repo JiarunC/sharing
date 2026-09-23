@@ -17,20 +17,37 @@ function Square({ value, position, offsets, onSquareClick } : {value : number, p
         </>
     )
 }
+// https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+// Fisher–Yates (aka Knuth) Shuffle
+function shuffle(array : Array<number>) {
+    let currentIndex = array.length;
+    while (currentIndex != 0) {
+        let randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex], array[currentIndex]];
+    }
+}
 function Board() {
-    const [board, setBoard] = useState(Array(8).fill(0));
-    const [offsetArray, setOffsetArray] = useState(Array(8).fill([0,0]))
-    const emptySlot = useRef(9);
-
-    const positions = useRef(Array(8).fill(0));
+    const boardSize = 4;
+    const numberOfTiles = boardSize * boardSize - 1;
+    // const e = boardSize;
+    const [board, setBoard] = useState(Array(numberOfTiles).fill(0)); // 0-indexed
+    const [offsetArray, setOffsetArray] = useState(Array(numberOfTiles).fill([0,0])); // 0-indexed
+    const emptySlot = useRef(boardSize * boardSize);
+    const positions = useRef(Array(numberOfTiles).fill(0));
 
     function populateBoard() {
-        const newBoard = [3,1,4,5,8,2,7,6];
+        let newBoard = Array(numberOfTiles).fill(0).map<number>((_, i) => {return i+1;});
+        shuffle(newBoard);
         setBoard(newBoard);
-        const newOffsetArray = Array(8).fill(0).map((_, i) => [i*100 % 300, Math.trunc(i/3)*100])
-        console.log(newOffsetArray);
+        positions.current = Array(numberOfTiles).fill(0).map<number>((_, i) => {
+            return i+1;
+        }); // 0-indexed
+        console.log(positions.current);
+        const newOffsetArray = Array(numberOfTiles).fill(0).map((_, i) => [(i%boardSize)*100, Math.trunc(i/boardSize)*100]) // 0-indexed
         setOffsetArray(newOffsetArray);
-        positions.current = [1,2,3,4,5,6,7,8];
+        emptySlot.current = boardSize * boardSize;
     }
 
     function clearBoard() {
@@ -58,7 +75,7 @@ function Board() {
             newPositions[i] = emptySlot.current;
             positions.current = newPositions;
             emptySlot.current = tmp;
-        } else if (emptySlot.current - positions.current[i] === 3) {
+        } else if (emptySlot.current - positions.current[i] === boardSize) {
             const newOffsetArray = offsetArray.slice();
             newOffsetArray[i] = [newOffsetArray[i][0], newOffsetArray[i][1]+100];
             setOffsetArray(newOffsetArray);
@@ -67,7 +84,7 @@ function Board() {
             newPositions[i] = emptySlot.current;
             positions.current = newPositions;
             emptySlot.current = tmp;
-        } else if (emptySlot.current - positions.current[i] === -3) {
+        } else if (emptySlot.current - positions.current[i] === -boardSize) {
             const newOffsetArray = offsetArray.slice();
             newOffsetArray[i] = [newOffsetArray[i][0], newOffsetArray[i][1]-100];
             setOffsetArray(newOffsetArray);
@@ -84,7 +101,7 @@ function Board() {
                 <button className={"controls"} onClick={populateBoard}>Populate - {emptySlot.current}</button>
                 <button className={"controls"} onClick={clearBoard}>Clear</button>
                 <div className={"board"}>
-                    {Array(8).fill(0).map((_,index) =>
+                    {Array(numberOfTiles).fill(0).map((_,index) =>
                         <Square
                             value={board[index]}
                             position={positions.current[index]}
@@ -109,12 +126,15 @@ export default function Tiles() {
             <main>
                 <section>
                     <div className={"container"}>
-                        <div className={"tile"}>
-                            <Board />
-                        </div>
+                        <Board />
                     </div>
                 </section>
             </main>
+            <footer>
+                <ul>
+                    <li><a href={"https://mathworld.wolfram.com/15Puzzle.html"} target={"_blank"}>Wolfram MathWorld</a></li>
+                </ul>
+            </footer>
         </>
     )
 }
