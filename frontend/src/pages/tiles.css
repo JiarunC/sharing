@@ -24,11 +24,18 @@
     border: medium solid ivory;
     width: 100px;
     height: 100px;
+    justify-content: center;
+    align-items: center;
+    transition: transform .2s ease-out;
 }
 
 .square:hover {
     background-color: #2c2329;
-    border: medium solid ivory;
+}
+
+.square span {
+    font-size: 1.3rem;
+    font-weight: bold;
 }
 
 .controls {

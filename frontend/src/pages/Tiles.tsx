@@ -12,7 +12,7 @@ function Square({ value, position, offsets, onSquareClick } : {value : number, p
                     transform: `translate(${offsets[0]}px, ${offsets[1]}px)`,
                 }}
             >
-                {value} - { position }
+                <span>{value}</span>
             </button>
         </>
     )
@@ -28,30 +28,47 @@ function shuffle(array : Array<number>) {
             array[randomIndex], array[currentIndex]];
     }
 }
+
+//https://mathworld.wolfram.com/15Puzzle.html
+function solubilityQ(array : Array<number>, e : number) {
+    let N = 0;
+    for (let i = 0; i < array.length; i++) {
+        let val = array[i];
+        for (let j = i; j < array.length; j++) {
+            if (array[j] < val) {
+                N++;
+            }
+        }
+    }
+    console.log(array, !((N+e) % 2));
+    return !((N+e) % 2);
+}
 function Board() {
     const boardSize = 4;
     const numberOfTiles = boardSize * boardSize - 1;
-    // const e = boardSize;
+    const e = boardSize;
     const [board, setBoard] = useState(Array(numberOfTiles).fill(0)); // 0-indexed
     const [offsetArray, setOffsetArray] = useState(Array(numberOfTiles).fill([0,0])); // 0-indexed
     const emptySlot = useRef(boardSize * boardSize);
     const positions = useRef(Array(numberOfTiles).fill(0));
+    const [status, setStatus] = useState("IN PROGRESS");
+    const [moves, setMoves] = useState(0);
 
     function populateBoard() {
         let newBoard = Array(numberOfTiles).fill(0).map<number>((_, i) => {return i+1;});
         shuffle(newBoard);
+        while (!solubilityQ(newBoard, e)) {
+            shuffle(newBoard);
+        }
         setBoard(newBoard);
         positions.current = Array(numberOfTiles).fill(0).map<number>((_, i) => {
             return i+1;
         }); // 0-indexed
-        console.log(positions.current);
         const newOffsetArray = Array(numberOfTiles).fill(0).map((_, i) => [(i%boardSize)*100, Math.trunc(i/boardSize)*100]) // 0-indexed
         setOffsetArray(newOffsetArray);
         emptySlot.current = boardSize * boardSize;
-    }
-
-    function clearBoard() {
-
+        setStatus("IN PROGRESS");
+        setMoves(0);
     }
 
     function handleClick(i: number) {
@@ -65,6 +82,7 @@ function Board() {
             newPositions[i] = emptySlot.current;
             positions.current = newPositions;
             emptySlot.current = tmp;
+            setMoves(moves+1);
         } else if (emptySlot.current - positions.current[i] === -1) {
             // left
             const newOffsetArray = offsetArray.slice();
@@ -75,6 +93,7 @@ function Board() {
             newPositions[i] = emptySlot.current;
             positions.current = newPositions;
             emptySlot.current = tmp;
+            setMoves(moves+1);
         } else if (emptySlot.current - positions.current[i] === boardSize) {
             const newOffsetArray = offsetArray.slice();
             newOffsetArray[i] = [newOffsetArray[i][0], newOffsetArray[i][1]+100];
@@ -84,6 +103,7 @@ function Board() {
             newPositions[i] = emptySlot.current;
             positions.current = newPositions;
             emptySlot.current = tmp;
+            setMoves(moves+1);
         } else if (emptySlot.current - positions.current[i] === -boardSize) {
             const newOffsetArray = offsetArray.slice();
             newOffsetArray[i] = [newOffsetArray[i][0], newOffsetArray[i][1]-100];
@@ -93,13 +113,30 @@ function Board() {
             newPositions[i] = emptySlot.current;
             positions.current = newPositions;
             emptySlot.current = tmp;
+            setMoves(moves+1);
+        } else {
+            return;
         }
+
+        if (emptySlot.current === boardSize * boardSize) {
+            for (let i = 0; i < board.length; i++) {
+                console.log(board[i], positions.current[i]);
+                if (board[i] !== positions.current[i]) {
+                    return;
+                }
+            }
+        } else {
+            return;
+        }
+        // won
+        setStatus("COMPLETED");
+        emptySlot.current = -1;
     }
     return (
         <>
-            <div>
-                <button className={"controls"} onClick={populateBoard}>Populate - {emptySlot.current}</button>
-                <button className={"controls"} onClick={clearBoard}>Clear</button>
+            <div className={"container"}>
+                <span>{status}: {moves}</span>
+                <button className={"controls"} onClick={populateBoard}>Populate</button>
                 <div className={"board"}>
                     {Array(numberOfTiles).fill(0).map((_,index) =>
                         <Square
@@ -125,9 +162,7 @@ export default function Tiles() {
             </header>
             <main>
                 <section>
-                    <div className={"container"}>
-                        <Board />
-                    </div>
+                    <Board />
                 </section>
             </main>
             <footer>
