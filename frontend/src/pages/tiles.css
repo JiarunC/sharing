@@ -8,8 +8,10 @@
 
 
 .board {
+    box-sizing: content-box;
     width: 400px;
     height: 400px;
+    padding: 6px;
     border-radius: 1.5rem;
     border: medium solid orange;
     background-color: #423d43;

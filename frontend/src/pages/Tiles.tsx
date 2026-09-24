@@ -1,5 +1,6 @@
 import {useRef, useState} from 'react';
 import "./tiles.css"
+import { Stack } from '@datastructures-js/stack'
 
 type coordinate = [number, number];
 function Square({ value, offsets, onSquareClick } : {value : number, offsets: coordinate, onSquareClick : any}) {
@@ -17,6 +18,112 @@ function Square({ value, offsets, onSquareClick } : {value : number, offsets: co
         </>
     )
 }
+
+function estimate(array: Array<number>) {
+    let res = 0;
+    for (let i = 0; i < array.length; i++) {
+        if (array[i] === 16) {
+            continue;
+        }
+        let goalX = array[i] % 4;
+        let goalY = Math.trunc(array[i] / 4);
+        let curX = (i+1) % 4;
+        let curY = Math.trunc((i+1) / 4);
+        res += Math.abs(goalX - curX) + Math.abs(goalY - curY);
+    }
+    return res;
+}
+// https://www.sciencedirect.com/science/article/pii/0004370285900840
+// IDA star
+// g: cost so far to reach a node
+// h: estimated cost to reach goal state
+// Manhattan distance heuristic: grid unit between current tile position and goal position
+// 1 index, empty slot at 16
+function solve(array : Array<number>, emptySlot : number) {
+    const startPoint = array.slice();
+    startPoint.push(16);
+    [startPoint[emptySlot-1], startPoint[15]] = [startPoint[15], startPoint[emptySlot-1]];
+    const goalPoint = Array(16).fill(0).map<number>((_, i) => {return i+1;})
+    let k = 0;
+    let moves = Array<number>(80);
+    let threshold = estimate(startPoint);
+    while(k<27) {
+        k++;
+        console.log(k, threshold);
+        const excess = DFS(startPoint, moves, threshold, 0, emptySlot, 0, goalPoint, k, Number.POSITIVE_INFINITY)!;
+        if (excess !== Number.POSITIVE_INFINITY) {
+            threshold += excess;
+        }
+        if (excess === -1) {
+            console.log(moves);
+            return moves;
+        }
+    }
+}
+
+function DFS(array : Array<number>, moves : Array<number>, threshold: number, g: number, es: number, it: number, goal : Array<number>, k : number, excess : number): number {
+    let equalCount = 0;
+    for (let j = 0; j < goal.length; j++) {
+        if (array[j] !== goal[j]) {
+            break;
+        } else {
+            equalCount++;
+            if (equalCount === 16) {
+                console.log(moves);
+                return -1;
+            }
+        }
+    }
+    if (it == k) {
+        return excess;
+    }
+    let furtherCost = estimate(array);
+    let newCost = g + furtherCost;
+    if (newCost > threshold) {
+        excess = Math.min(excess, newCost - threshold);
+        return excess;
+    }
+
+    // right: 0, left: 1, down: 2, up : 3
+    let options = [];
+    if (es % 4 === 0) {
+        options = [es-1, -1, es-4,es+4];
+    } else if (es % 4 === 1) {
+        options = [-1, es+1,es-4,es+4];
+    } else {
+        options = [es-1, es+1,es-4,es+4];
+    }
+
+    if (moves[moves.length - 1] === 0) { // moved right
+        options[1] = -1;
+    } else if (moves[moves.length - 1] === 1) {
+        options[0] = -1;
+    } else if (moves[moves.length - 1] === 2) {
+        options[3] = -1;
+    } else {
+        options[2] = -1;
+    }
+
+
+    for (let i = 0; i < options.length; i++) {
+        let opt = options[i];
+        if (opt >= 1 && opt <= 16) {
+            [array[es-1], array[opt-1]] = [array[opt-1], array[es-1]];
+            moves.push(i);
+            const excessRet = DFS(array, moves, threshold, g+1, opt, it+1, goal, k, excess);
+            if (excessRet === -1) {
+                return excessRet;
+            }
+            excess = Math.min(excess, excessRet);
+            [array[es-1], array[opt-1]] = [array[opt-1], array[es-1]];
+            moves.pop();
+        }
+    }
+    return excess;
+}
+
+
+
 // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 // Fisher–Yates (aka Knuth) Shuffle
 function shuffle(array : Array<number>) {
@@ -40,7 +147,6 @@ function solubilityQ(array : Array<number>, e : number) {
             }
         }
     }
-    console.log(array, !((N+e) % 2));
     return !((N+e) % 2);
 }
 function Board() {
@@ -70,9 +176,14 @@ function Board() {
         setStatus("IN PROGRESS");
         setMoves(0);
     }
+    function solveBoard() {
+        let es = emptySlot.current;
+        emptySlot.current = -1;
+        solve(board.slice(), es);
+    }
 
     function handleClick(i: number) {
-        if (emptySlot.current - positions.current[i] === 1) {
+        if (emptySlot.current - positions.current[i] === 1 && emptySlot.current % boardSize != 1) {
             // empty is on the right
             const newOffsetArray = offsetArray.slice();
             newOffsetArray[i] = [newOffsetArray[i][0]+100, newOffsetArray[i][1]];
@@ -83,7 +194,7 @@ function Board() {
             positions.current = newPositions;
             emptySlot.current = tmp;
             setMoves(moves+1);
-        } else if (emptySlot.current - positions.current[i] === -1) {
+        } else if (emptySlot.current - positions.current[i] === -1 && emptySlot.current % boardSize != 0) {
             // left
             const newOffsetArray = offsetArray.slice();
             newOffsetArray[i] = [newOffsetArray[i][0]-100, newOffsetArray[i][1]];
@@ -137,6 +248,7 @@ function Board() {
             <div className={"container"}>
                 <span>{status}: {moves}</span>
                 <button className={"controls"} onClick={populateBoard}>Populate</button>
+                <button className={"controls"} onClick={solveBoard}>IDA &#42;</button>
                 <div className={"board"}>
                     {Array(numberOfTiles).fill(0).map((_,index) =>
                         <Square
@@ -145,8 +257,6 @@ function Board() {
                             onSquareClick={() => handleClick(index)}
                         />
                     )}
-
-
                 </div>
             </div>
         </>
