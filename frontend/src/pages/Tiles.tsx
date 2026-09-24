@@ -1,6 +1,5 @@
 import {useRef, useState} from 'react';
 import "./tiles.css"
-import { Stack } from '@datastructures-js/stack'
 
 type coordinate = [number, number];
 function Square({ value, offsets, onSquareClick } : {value : number, offsets: coordinate, onSquareClick : any}) {
@@ -45,12 +44,12 @@ function solve(array : Array<number>, emptySlot : number) {
     [startPoint[emptySlot-1], startPoint[15]] = [startPoint[15], startPoint[emptySlot-1]];
     const goalPoint = Array(16).fill(0).map<number>((_, i) => {return i+1;})
     let k = 0;
-    let moves = Array<number>(80);
+    let moves = Array<number>();
     let threshold = estimate(startPoint);
-    while(k<27) {
+    while(k<17) {
         k++;
         console.log(k, threshold);
-        const excess = DFS(startPoint, moves, threshold, 0, emptySlot, 0, goalPoint, k, Number.POSITIVE_INFINITY)!;
+        const excess = DFS(startPoint, moves, threshold, 0, emptySlot, 0, goalPoint, Number.POSITIVE_INFINITY)!;
         if (excess !== Number.POSITIVE_INFINITY) {
             threshold += excess;
         }
@@ -61,23 +60,12 @@ function solve(array : Array<number>, emptySlot : number) {
     }
 }
 
-function DFS(array : Array<number>, moves : Array<number>, threshold: number, g: number, es: number, it: number, goal : Array<number>, k : number, excess : number): number {
-    let equalCount = 0;
-    for (let j = 0; j < goal.length; j++) {
-        if (array[j] !== goal[j]) {
-            break;
-        } else {
-            equalCount++;
-            if (equalCount === 16) {
-                console.log(moves);
-                return -1;
-            }
-        }
-    }
-    if (it == k) {
-        return excess;
-    }
+function DFS(array : Array<number>, moves : Array<number>, threshold: number, g: number, es: number, it: number, goal : Array<number>, excess : number): number {
     let furtherCost = estimate(array);
+    if (furtherCost === 0) {
+        // goal state
+        return -1;
+    }
     let newCost = g + furtherCost;
     if (newCost > threshold) {
         excess = Math.min(excess, newCost - threshold);
@@ -100,7 +88,7 @@ function DFS(array : Array<number>, moves : Array<number>, threshold: number, g:
         options[0] = -1;
     } else if (moves[moves.length - 1] === 2) {
         options[3] = -1;
-    } else {
+    } else if (moves[moves.length - 1] === 3) {
         options[2] = -1;
     }
 
@@ -110,7 +98,7 @@ function DFS(array : Array<number>, moves : Array<number>, threshold: number, g:
         if (opt >= 1 && opt <= 16) {
             [array[es-1], array[opt-1]] = [array[opt-1], array[es-1]];
             moves.push(i);
-            const excessRet = DFS(array, moves, threshold, g+1, opt, it+1, goal, k, excess);
+            const excessRet = DFS(array, moves, threshold, g+1, opt, it+1, goal, excess);
             if (excessRet === -1) {
                 return excessRet;
             }
