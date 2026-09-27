@@ -12,6 +12,7 @@
     width: 400px;
     height: 400px;
     padding: 6px;
+    margin: 1rem;
     border-radius: 1.5rem;
     border: medium solid orange;
     background-color: #423d43;
@@ -40,15 +41,30 @@
     font-weight: bold;
 }
 
-.controls {
+.status-tag {
     padding: .3rem 1rem;
     margin: .2rem;
-    margin-bottom: 1rem;
+}
+
+.controls {
+    padding: .3rem 1rem;
+    margin: .2rem .2rem .5rem;
     border-radius: 1rem;
     border: medium solid ivory;
     background-color: #575757;
 }
 
+.controls:disabled {
+    background-color: #8c8c8c;
+    cursor: not-allowed;
+}
+
 .controls:hover {
     background-color: #202020;
+}
+footer {
+    margin: 2rem;
+}
+footer li {
+    margin: .5rem;
 }

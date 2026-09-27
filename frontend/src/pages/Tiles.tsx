@@ -51,8 +51,10 @@ function Board() {
     const [offsetArray, setOffsetArray] = useState(Array(numberOfTiles).fill([0,0])); // 0-indexed
     const emptySlot = useRef(boardSize * boardSize);
     const positions = useRef(Array(numberOfTiles).fill(0));
-    const [status, setStatus] = useState("IN PROGRESS");
+    const [status, setStatus] = useState("Moves");
     const [moves, setMoves] = useState(0);
+    const [lock, setLock] = useState(false);
+    const pdbInitialized = useRef(false);
 
     function populateBoard() {
         let newBoard = Array(numberOfTiles).fill(0).map<number>((_, i) => {return i+1;});
@@ -67,63 +69,155 @@ function Board() {
         const newOffsetArray = Array(numberOfTiles).fill(0).map((_, i) => [(i%boardSize)*100, Math.trunc(i/boardSize)*100]) // 0-indexed
         setOffsetArray(newOffsetArray);
         emptySlot.current = boardSize * boardSize;
-        setStatus("IN PROGRESS");
+        setStatus("Moves");
         setMoves(0);
+        setLock(false);
     }
-    function solveBoard() {
-        alert("Backend Magic In Progress");
+
+    async function get_solution(invertedBoard : Array<number>) {
+        const url = "/api/p15solver";
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    board : invertedBoard,
+                })
+            });
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result.solution;
+        } catch (error : any) {
+            console.error(error.message);
+            return null;
+        }
+    }
+
+    async function solveBoard() {
+        if (emptySlot.current === -1) {
+            return;
+        }
+
+        if (lock) return;
+        setLock(true);
+
+        if (!pdbInitialized.current) {
+            setStatus("Initializing solver");
+        }
+
+        let offsetArrayCopy = structuredClone(offsetArray);
+        let es = emptySlot.current;
+        emptySlot.current = -1;
+
+        let invertedBoard = new Array<number>(16).fill(0);
+
+        for (let i = 0; i < board.length; i++) {
+            invertedBoard[positions.current[i]-1] = board[i];
+        }
+
+        invertedBoard = invertedBoard.toReversed();
+        for (let i = invertedBoard.length - 1; i >= 0; i--) {
+            if (invertedBoard[i] === 0) {
+                continue;
+            }
+            invertedBoard[i] = 15 - invertedBoard[i] + 1;
+        }
+        let solution = await get_solution(invertedBoard);
+
+        if (!solution) {
+            setStatus("Error encountered");
+            setLock(false);
+            return;
+        }
+
+        pdbInitialized.current = true;
+        setStatus("Solving");
+        let directions: Array<any> = [];
+        for (let i = 0; i < solution.length; i++) {
+            if (solution[i] === 'r') {
+                directions.push('l');
+            } else if (solution[i] === 'l') {
+                directions.push('r');
+            } else if (solution[i] === 'u') {
+                directions.push('d');
+            } else if (solution[i] === 'd') {
+                directions.push('u');
+            }
+        }
+
+        for (let direction of directions) {
+            let i = -1;
+            let x = -1;
+            let y = -1;
+            if (direction === 'r') {
+                i = es-1;
+                x = 100;
+                y = 0;
+            } else if (direction === 'l') {
+                i = es+1;
+                x = -100;
+                y = 0;
+            } else if (direction === 'd') {
+                i = es-4;
+                x = 0;
+                y = 100;
+            } else if (direction === 'u') {
+                i = es+4;
+                x = 0;
+                y = -100;
+            }
+            console.log(direction, i);
+            const targetIndex = positions.current.indexOf(i);
+            const newOffsetArray = offsetArrayCopy.slice();
+            newOffsetArray[targetIndex] = [newOffsetArray[targetIndex][0]+x, newOffsetArray[targetIndex][1]+y];
+            setOffsetArray(newOffsetArray);
+            offsetArrayCopy = newOffsetArray;
+
+            const newPositions = positions.current.slice();
+            let tmp = newPositions[targetIndex];
+            newPositions[targetIndex] = es;
+            positions.current = newPositions;
+            es = tmp;
+            await new Promise(resolve => {setTimeout(resolve, 300)});
+        }
+        setStatus("Solved");
+        setLock(false);
+    }
+
+    function move(i : number, x: number, y:number) { // 0 indexed index
+        const newOffsetArray = offsetArray.slice();
+        newOffsetArray[i] = [newOffsetArray[i][0]+x, newOffsetArray[i][1]+y];
+        setOffsetArray(newOffsetArray);
+        const newPositions = positions.current.slice();
+        let tmp = newPositions[i];
+        newPositions[i] = emptySlot.current;
+        positions.current = newPositions;
+        emptySlot.current = tmp;
+        setMoves(moves+1);
     }
 
     function handleClick(i: number) {
         if (emptySlot.current - positions.current[i] === 1 && emptySlot.current % boardSize != 1) {
             // empty is on the right
-            const newOffsetArray = offsetArray.slice();
-            newOffsetArray[i] = [newOffsetArray[i][0]+100, newOffsetArray[i][1]];
-            setOffsetArray(newOffsetArray);
-            const newPositions = positions.current.slice();
-            let tmp = newPositions[i];
-            newPositions[i] = emptySlot.current;
-            positions.current = newPositions;
-            emptySlot.current = tmp;
-            setMoves(moves+1);
+            move(i, 100, 0);
         } else if (emptySlot.current - positions.current[i] === -1 && emptySlot.current % boardSize != 0) {
             // left
-            const newOffsetArray = offsetArray.slice();
-            newOffsetArray[i] = [newOffsetArray[i][0]-100, newOffsetArray[i][1]];
-            setOffsetArray(newOffsetArray);
-            const newPositions = positions.current.slice();
-            let tmp = newPositions[i];
-            newPositions[i] = emptySlot.current;
-            positions.current = newPositions;
-            emptySlot.current = tmp;
-            setMoves(moves+1);
+            move(i, -100, 0);
         } else if (emptySlot.current - positions.current[i] === boardSize) {
-            const newOffsetArray = offsetArray.slice();
-            newOffsetArray[i] = [newOffsetArray[i][0], newOffsetArray[i][1]+100];
-            setOffsetArray(newOffsetArray);
-            const newPositions = positions.current.slice();
-            let tmp = newPositions[i];
-            newPositions[i] = emptySlot.current;
-            positions.current = newPositions;
-            emptySlot.current = tmp;
-            setMoves(moves+1);
+            move(i, 0, 100);
         } else if (emptySlot.current - positions.current[i] === -boardSize) {
-            const newOffsetArray = offsetArray.slice();
-            newOffsetArray[i] = [newOffsetArray[i][0], newOffsetArray[i][1]-100];
-            setOffsetArray(newOffsetArray);
-            const newPositions = positions.current.slice();
-            let tmp = newPositions[i];
-            newPositions[i] = emptySlot.current;
-            positions.current = newPositions;
-            emptySlot.current = tmp;
-            setMoves(moves+1);
+            move(i, 0, -100);
         } else {
             return;
         }
 
         if (emptySlot.current === boardSize * boardSize) {
             for (let i = 0; i < board.length; i++) {
-                console.log(board[i], positions.current[i]);
                 if (board[i] !== positions.current[i]) {
                     return;
                 }
@@ -132,15 +226,15 @@ function Board() {
             return;
         }
         // won
-        setStatus("COMPLETED");
+        setStatus("Completed");
         emptySlot.current = -1;
     }
     return (
         <>
             <div className={"container"}>
-                <span>{status}: {moves}</span>
-                <button className={"controls"} onClick={populateBoard}>Populate</button>
-                <button className={"controls"} onClick={solveBoard}>IDA &#42;</button>
+                <span className={"status-tag"}>{status}: {moves}</span>
+                <button className={"controls"} onClick={populateBoard} disabled={lock}>Populate</button>
+                <button className={"controls"} onClick={solveBoard} disabled={lock}>IDA &#42;</button>
                 <div className={"board"}>
                     {Array(numberOfTiles).fill(0).map((_,index) =>
                         <Square
@@ -169,6 +263,8 @@ export default function Tiles() {
             <footer>
                 <ul>
                     <li><a href={"https://mathworld.wolfram.com/15Puzzle.html"} target={"_blank"}>Wolfram MathWorld</a></li>
+                    <li><a href={"https://doi.org/10.1016/0004-3702(85)90084-0"} target={"_blank"}>Depth-first iterative-deepening</a></li>
+                    <li><a href={"https://doi.org/10.1016/S0004-3702(01)00092-3"} target={"_blank"}>Disjoint pattern database heuristics</a></li>
                 </ul>
             </footer>
         </>
