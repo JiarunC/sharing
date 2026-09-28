@@ -32,10 +32,6 @@
     transition: transform .2s ease-out;
 }
 
-.square:hover {
-    background-color: #2c2329;
-}
-
 .square span {
     font-size: 1.3rem;
     font-weight: bold;
