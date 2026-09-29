@@ -1,5 +1,5 @@
 .container {
-    padding: 1rem;
+    padding: 0 1rem 1rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -57,10 +57,4 @@
 
 .controls:hover {
     background-color: #202020;
-}
-footer {
-    margin: 2rem;
-}
-footer li {
-    margin: .5rem;
 }

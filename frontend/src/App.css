@@ -4,16 +4,10 @@
     box-sizing: border-box;
 }
 
-
-ul {
-    list-style: none;
+.overview {
+    padding: 1rem 1rem .5rem;
 }
 
-a{
-    text-decoration: underline;
-    color: ivory;
-}
-
-a:active{
-    color: orange;
+main {
+    min-height: 800px;
 }
