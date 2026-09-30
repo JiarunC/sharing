@@ -10,9 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "normalize": "^0.3.1",
+    "normalize.css": "^8.0.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router": "^7.18.4"
+    "react-router": "^7.18.4",
+    "react-toastify": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

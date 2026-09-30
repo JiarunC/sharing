@@ -1,3 +1,9 @@
+/*
+ * tiles.css
+ * css styling sheet for tiles page (Fifteen Puzzle)
+ */
+
+
 .container {
     padding: 0 1rem 1rem;
     display: flex;
@@ -15,13 +21,13 @@
     margin: 1rem;
     border-radius: 1.5rem;
     border: medium solid orange;
-    background-color: #423d43;
+    background-color: var(--secondary-bg);
     display: flex;
 }
 
 
 .square {
-    background-color: #3e2a36;
+    background-color: var(--accent-bg);
     position: absolute;
     border-radius: 1rem;
     border: medium solid ivory;
@@ -47,14 +53,14 @@
     margin: .2rem .2rem .5rem;
     border-radius: 1rem;
     border: medium solid ivory;
-    background-color: #575757;
+    background-color: var(--accent-bg);
 }
 
 .controls:disabled {
-    background-color: #8c8c8c;
+    filter: contrast(80%);
     cursor: not-allowed;
 }
 
 .controls:hover {
-    background-color: #202020;
+    filter: contrast(180%) opacity(70%);
 }

@@ -1,7 +1,27 @@
+/*
+ * tiles.tsx
+ * page for tiles (fifteen puzzle)
+ * connects to backend binary p15solver
+ * adapted from React tutorial tic-tac-toe
+ *
+ * arrays are 0 indexed
+ * references to slot such as emptySlot are 1 indexed
+ * has goal state 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0
+ * 0 is empty slot
+ * backend has goal state 0,1-15
+ * invert board before posting to backend
+ * invert after receiving solution
+ * has animate solution function
+ *
+ * manually written with debugging help from Gemini
+ */
+
 import {useRef, useState} from 'react';
 import "./tiles.css"
+import {toast} from "react-toastify";
 
 type coordinate = [number, number];
+
 function Square({ value, offsets, onSquareClick } : {value : number, offsets: coordinate, onSquareClick : any}) {
     return (
         <>
@@ -47,8 +67,8 @@ function Board() {
     const boardSize = 4;
     const numberOfTiles = boardSize * boardSize - 1;
     const e = boardSize;
-    const [board, setBoard] = useState(Array(numberOfTiles).fill(0)); // 0-indexed
-    const [offsetArray, setOffsetArray] = useState(Array(numberOfTiles).fill([0,0])); // 0-indexed
+    const [board, setBoard] = useState(Array(numberOfTiles).fill(0));
+    const [offsetArray, setOffsetArray] = useState(Array(numberOfTiles).fill([0,0]));
     const emptySlot = useRef(boardSize * boardSize);
     const positions = useRef(Array(numberOfTiles).fill(0));
     const [status, setStatus] = useState("Moves");
@@ -65,7 +85,7 @@ function Board() {
         setBoard(newBoard);
         positions.current = Array(numberOfTiles).fill(0).map<number>((_, i) => {
             return i+1;
-        }); // 0-indexed
+        });
         const newOffsetArray = Array(numberOfTiles).fill(0).map((_, i) => [(i%boardSize)*100, Math.trunc(i/boardSize)*100]) // 0-indexed
         setOffsetArray(newOffsetArray);
         emptySlot.current = boardSize * boardSize;
@@ -108,6 +128,7 @@ function Board() {
 
         if (!pdbInitialized.current) {
             setStatus("Initializing solver");
+            toast('Solver needs to be initialized. This could take a while. However, subsequent solves are instant.');
         }
 
         let offsetArrayCopy = structuredClone(offsetArray);
@@ -189,7 +210,7 @@ function Board() {
         setLock(false);
     }
 
-    function move(i : number, x: number, y:number) { // 0 indexed index
+    function move(i : number, x: number, y:number) {
         const newOffsetArray = offsetArray.slice();
         newOffsetArray[i] = [newOffsetArray[i][0]+x, newOffsetArray[i][1]+y];
         setOffsetArray(newOffsetArray);
@@ -203,10 +224,8 @@ function Board() {
 
     function handleClick(i: number) {
         if (emptySlot.current - positions.current[i] === 1 && emptySlot.current % boardSize != 1) {
-            // empty is on the right
             move(i, 100, 0);
         } else if (emptySlot.current - positions.current[i] === -1 && emptySlot.current % boardSize != 0) {
-            // left
             move(i, -100, 0);
         } else if (emptySlot.current - positions.current[i] === boardSize) {
             move(i, 0, 100);
@@ -234,7 +253,7 @@ function Board() {
             <div className={"container"}>
                 <span className={"status-tag"}>{status}: {moves}</span>
                 <button className={"controls"} onClick={populateBoard} disabled={lock}>Populate</button>
-                <button className={"controls"} onClick={solveBoard} disabled={lock}>IDA &#42;</button>
+                <button className={"controls"} onClick={solveBoard} disabled={lock}>Solve</button>
                 <div className={"board"}>
                     {Array(numberOfTiles).fill(0).map((_,index) =>
                         <Square

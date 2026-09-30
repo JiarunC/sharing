@@ -1,3 +1,11 @@
+/*
+ * index.js
+ * backend entry
+ * with express
+ * needs a queue
+ * Manually written with heavy help from Gemini
+ */
+
 import express from 'express';
 import path from "path";
 import { fileURLToPath } from "url";

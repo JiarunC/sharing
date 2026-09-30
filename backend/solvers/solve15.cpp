@@ -1,3 +1,22 @@
+/*
+ * solve15.cpp
+ * backend solver for fifteen puzzle (tiles)
+ * builds into binary that streams
+ *
+ * goal state: 0-15 (0 = empty)
+ * 5-5-5 disjointed pattern database with iterative deepening
+ * everything is 0 indexed (few exceptions)
+ * sqr 64 bit unsigned to contain 16*4 board
+ *
+ * Limitations:
+ *  magic numbers (but this is fairly contained)
+ *  needs a queue
+ *  can be more efficient (pdb generation)
+ *
+ * Manually written with debugging help from Gemini
+ */
+
+
 #include <algorithm>
 #include <iostream>
 #include <random>
@@ -11,10 +30,6 @@
 #include <unordered_set>
 #include <climits>
 using namespace std;
-
-// all arrays are 0 indexed
-// unless need be
-// 0-15, 0 is empty
 
 typedef uint64_t sqr;
 
