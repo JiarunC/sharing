@@ -29,6 +29,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <climits>
+#include <filesystem>
+#include <fstream>
 using namespace std;
 
 typedef uint64_t sqr;
@@ -81,6 +83,28 @@ static void generate_table() {
 static vector<unordered_map<sqr, int> > pdb(3);
 
 static void generate_pdb_table(const vector<sqr> &group, int index, sqr not_in_group) {
+
+
+    if (filesystem::exists(format("../static/pdb_table_{}.csv", index))) {
+        ifstream pdb_table_file;
+        pdb_table_file.open(format("../static/pdb_table_{}.csv",index));
+        if (pdb_table_file.is_open()) {
+            string line;
+            string pattern;
+            string distance;
+            while (getline(pdb_table_file, line)) {
+                stringstream ss(line);
+                getline(ss, pattern, ',');
+                getline(ss, distance);
+                pdb[index].insert(pair{stoull(pattern), stoi(distance)});
+            }
+            pdb_table_file.close();
+            return;
+        }
+    }
+
+    pdb[index].clear();
+
     const auto queue = new std::queue<tuple<sqr, int, unsigned> >();
     sqr start = 0;
     for (sqr i: group) {
@@ -132,6 +156,14 @@ static void generate_pdb_table(const vector<sqr> &group, int index, sqr not_in_g
             queue->push(tuple<sqr, int, unsigned>{new_board, next_distance, opt});
         }
     }
+
+
+    ofstream pdb_table_file;
+    pdb_table_file.open(format("../static/pdb_table_{}.csv",index));
+    for (auto [fst, snd] : pdb[index]) {
+        pdb_table_file << fst << ',' << snd << '\n';
+    }
+    pdb_table_file.close();
 }
 
 static vector<sqr> group_a = {1, 2, 3, 5, 6};
