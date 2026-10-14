@@ -128,7 +128,7 @@ function Board() {
 
         if (!pdbInitialized.current) {
             setStatus("Initializing solver");
-            toast('Solver needs to be initialized. This could take a while. However, subsequent solves are instant.');
+            toast('Solver needs to be initialized. This may take a while. However, subsequent solves are instant.');
         }
 
         let offsetArrayCopy = structuredClone(offsetArray);

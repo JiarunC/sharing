@@ -10,8 +10,6 @@
  *
  * Limitations:
  *  magic numbers (but this is fairly contained)
- *  needs a queue
- *  can be more efficient (pdb generation)
  *
  * Manually written with debugging help from Gemini
  */

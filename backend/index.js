@@ -2,7 +2,6 @@
  * index.js
  * backend entry
  * with express
- * needs a queue
  * Manually written with heavy help from Gemini
  */
 
@@ -28,26 +27,25 @@ app.use(express.static(path.join(__dirname, "../frontend/dist")));
 app.get("/{*splat}", (req, res) => {
     res.sendFile(path.resolve(__dirname, "../frontend/dist", "index.html"));
 });
+const rl = readline.createInterface({
+    input: child.stdout,
+    output: child.stdin
+});
+
+let queue = Promise.resolve();
 
 async function solve(board) {
-    const rl = readline.createInterface({
-        input: child.stdout,
-        output: child.stdin
-    });
-    rl.setPrompt(`${board.join(' ')}\n`);
-    rl.prompt();
-    let response;
+    queue = queue.then(() => {
+        rl.setPrompt(`${board.join(' ')}\n`);
+        rl.prompt();
 
-    return new Promise((resolve, reject) => {
-        rl.on('line', (line) => {
-            response = line;
-            rl.close();
-        })
-
-        rl.on('close', () => {
-            resolve(response);
+        return new Promise((resolve, reject) => {
+            rl.on('line', (response) => {
+                resolve(response);
+            })
         })
     })
+    return queue;
 }
 
 app.post('/api/p15solver', async (req, res) => {

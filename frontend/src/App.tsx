@@ -37,8 +37,7 @@ function App() {
                 <ul>
                     <li><p>Jiarun Chen (David)</p></li>
                     <li><p>I'm a senior studying CS & Math at Washington University in St. Louis.</p></li>
-                    <li><p>The project files are public and mostly manually typed.</p></li>
-                    <li><a href="https://github.com/JiarunC" target="_blank">GitHub</a></li>
+                    <li><a href="https://github.com/JiarunC/sharing" target="_blank">GitHub</a></li>
                 </ul>
             </footer>
         </>
